@@ -1,0 +1,218 @@
+OPEN(2)                                               Linux Programmer's Manual                                               OPEN(2)
+       open, openat, creat - open and possibly create a file
+       #include <sys/types.h>
+
+
+       int openat(int dirfd, const char *pathname, int flags);
+   Feature Test Macro Requirements for glibc (see feature_test_macros(7)):
+           Since glibc 2.10:
+               _ATFILE_SOURCE
+       The  open()  system  call  opens  the file specified by pathname.  If the specified file does not exist, it may optionally (if
+       The return value of open() is a file descriptor, a small,  nonnegative  integer  that  is  used  in  subsequent  system  calls
+
+       offset is set to the beginning of the file (see lseek(2)).
+       tion records the file offset and the file status flags (see below).  A file descriptor is a reference to an open file descrip‐
+
+
+       remaining flags listed below.  The distinction between these two groups of flags is that the file creation  flags  affect  the
+
+       O_APPEND
+
+              out a race condition.
+              Enable signal-driven I/O: generate a signal (SIGIO by default, but this can be changed via fcntl(2)) when input or out‐
+
+              fcntl(2) F_SETFD operations to set the FD_CLOEXEC flag.
+              operation to set the FD_CLOEXEC flag does not suffice to avoid race conditions where one thread opens a file descriptor
+              tentionally leaked to the program executed by the child process created by fork(2).  (This kind of race is in principle
+
+
+              The group ownership (group ID) of the new file is set either to the effective group ID of the process (System V  seman‐
+              mantics apply.  For some filesystems, the behavior also depends on the bsdgroups and sysvgroups mount options described
+              The mode argument specifies the file mode bits be applied when a new file is created.  This argument must  be  supplied
+              the  created  file  is (mode & ~umask).  Note that this mode applies only to future accesses of the newly created file;
+              The following symbolic constants are provided for mode:
+
+              S_IWUSR  00200 user has write permission
+
+              S_IRGRP  00040 group has read permission
+
+              S_IRWXO  00007 others have read, write, and execute permission
+
+              S_IXOTH  00001 others have execute permission
+              honored in mode:
+
+              S_ISVTX  0001000 sticky bit (see inode(7)).
+              Try  to  minimize  cache effects of the I/O to and from this file.  In general this will degrade performance, but it is
+              guarantees of the O_SYNC flag that data and necessary metadata are transferred.  To guarantee synchronous  I/O,  O_SYNC
+              A semantically similar (but deprecated) interface for block devices is described in raw(8).
+              If  pathname  is  not a directory, cause the open to fail.  This flag was added in kernel version 2.1.126, to avoid de‐
+       O_DSYNC
+              By the time write(2) (and similar) return, the output data has been transferred to the underlying hardware, along  with
+
+
+
+              the system (e.g., mounted), open() fails with the error EBUSY.
+              support is not provided, programs that rely on it for performing locking tasks will contain a race condition.  Portable
+              a link to the lockfile.  If link(2) returns 0, the lock is successful.  Otherwise, use stat(2) on the  unique  file  to
+       O_LARGEFILE
+              Setting  the  _FILE_OFFSET_BITS feature test macro to 64 (rather than using O_LARGEFILE) is the preferred method of ac‐
+       O_NOATIME (since Linux 2.6.8)
+              This flag can be employed only if one of the following conditions is true:
+
+
+              cess time.
+              If  pathname  refers  to a terminal device—see tty(4)—it will not become the process's controlling terminal even if the
+       O_NOFOLLOW
+              case where an open fails because there are too many symbolic links found while resolving components in the prefix  part
+              This  flag  is a FreeBSD extension, which was added to Linux in version 2.1.126, and has subsequently been standardized
+              See also O_PATH below.
+              When possible, the file is opened in nonblocking mode.  Neither the open() nor any subsequent  I/O  operations  on  the
+              Note  that  the setting of this flag has no effect on the operation of poll(2), select(2), epoll(7), and similar, since
+
+              be  implemented,  applications should not depend upon blocking behavior when specifying this flag for regular files and
+              For the handling of FIFOs (named pipes), see also fifo(7).  For a discussion of the effect of O_NONBLOCK in conjunction
+       O_PATH (since Linux 2.6.39)
+              (e.g., read(2), write(2), fchmod(2), fchown(2), fgetxattr(2), ioctl(2), mmap(2)) fail with the error EBADF.
+
+              *  fchdir(2), if the file descriptor refers to a directory (since Linux 3.5).
+
+              *  Duplicating the file descriptor (dup(2), fcntl(2) F_DUPFD, etc.).
+
+
+
+              When O_PATH is specified in flags, flag bits other than O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW are ignored.
+              permission on the directories in the path prefix).  Depending on the subsequent operation, a check  for  suitable  file
+              quires  that  the  caller  have read permission on the object, even when the subsequent operation (e.g., fchdir(2), fs‐
+              If pathname is a symbolic link and the O_NOFOLLOW flag is also specified, then the call returns a file  descriptor  re‐
+
+              then be used to determine if it is, in fact, an untriggered automount point (.f_type == AUTOFS_SUPER_MAGIC).
+              open  a file for which we have execute permission but not read permission, and then execute that file, with steps some‐
+                  char buf[PATH_MAX];
+                  execl(buf, "some_prog", (char *) NULL);
+
+
+
+              ated in that directory's filesystem.  Anything written to the resulting file will be lost when the last file descriptor
+              O_TMPFILE must be specified with one of O_RDWR or O_WRONLY and, optionally, O_EXCL.  If O_EXCL is not  specified,  then
+
+                                          S_IRUSR | S_IWUSR);
+
+                  /* If the caller doesn't have the CAP_DAC_READ_SEARCH
+                     linkat(2) call above can be replaced with:
+                  linkat(AT_FDCWD, path, AT_FDCWD, "/path/for/file",
+
+              Specifying O_EXCL in conjunction with O_TMPFILE prevents a temporary file from being linked into the filesystem in  the
+              There are two main use cases for O_TMPFILE:
+                 closed; (2) can never be reached via any pathname; (3) are not subject to symlink attacks; and (4)  do  not  require
+              *  Creating  a  file  that  is  initially invisible, which is then populated with data and adjusted to have appropriate
+
+              for  other filesystems has subsequently been added as follows: XFS (Linux 3.15); Btrfs (Linux 3.16); F2FS (Linux 3.16);
+       O_TRUNC
+              the effect of O_TRUNC is unspecified.
+       A call to creat() is equivalent to calling open() with flags equal to O_CREAT|O_WRONLY|O_TRUNC.
+       The openat() system call operates in exactly the same way as open(), except for the differences described here.
+       scriptor dirfd (rather than relative to the current working directory of the calling process, as is done by open() for a rela‐
+       If pathname is relative and dirfd is the special value AT_FDCWD, then pathname is interpreted relative to the current  working
+       If pathname is absolute, then dirfd is ignored.
+       open(),  openat(),  and creat() return the new file descriptor, or -1 if an error occurred (in which case, errno is set appro‐
+ERRORS
+       EACCES The requested access to the file is not allowed, or search permission is denied for one of the directories in the  path
+
+
+       EFAULT pathname points outside your accessible address space.
+
+
+       EINVAL Invalid value in flags.
+
+
+       EISDIR pathname  refers  to  an  existing directory, O_TMPFILE and one of O_WRONLY or O_RDWR were specified in flags, but this
+       ELOOP  Too many symbolic links were encountered in resolving pathname.
+
+
+
+       ENODEV pathname refers to a device special file and no corresponding device exists.  (This is a Linux kernel bug; in this sit‐
+       ENOENT O_CREAT is not set and the named file does not exist.
+
+
+
+       ENOSPC pathname was to be created but the device containing pathname has no room for the new file.
+              A component used as a directory in pathname is not, in fact, a directory, or O_DIRECTORY was specified and pathname was
+       ENXIO  O_NONBLOCK | O_WRONLY is set, the named file is a FIFO, and no process has the FIFO open for reading.
+
+       EOPNOTSUPP
+       EOVERFLOW
+              also  O_LARGEFILE  above.  This is the error specified by POSIX.1; in kernels before 2.6.24, Linux gave the error EFBIG
+       EPERM  The O_NOATIME flag was specified, but the effective user ID of the caller did not match the owner of the file  and  the
+       EPERM  The operation was prevented by a file seal; see fcntl(2).
+
+
+
+              cess was requested.
+              The O_NONBLOCK flag was specified, and an incompatible lease was held on the file (see fcntl(2)).
+
+       ENOTDIR
+VERSIONS
+CONFORMING TO
+       openat(): POSIX.1-2008.
+       tions.
+       glibc 2.12, one can obtain their definitions by defining either _POSIX_C_SOURCE with a value greater than or equal to  200809L
+
+
+       tion to read or write.  For example, this may be used to open a device in  order  to  get  a  file  descriptor  for  use  with
+       The (undefined) effect of O_RDONLY | O_TRUNC varies among implementations.  On many systems the file is actually truncated.
+
+       of the parent directory.  Otherwise, if the file is modified because of the O_TRUNC flag, its st_ctime and st_mtime fields are
+       The files in the /proc/[pid]/fd directory show the open file descriptors of the process with the PID pid.  The  files  in  the
+
+   Open file descriptions
+       kernel-developer parlance—a struct file.
+       original file descriptor, and the two file descriptors consequently share the file offset and file status flags.  Such sharing
+
+
+
+       O_SYNC, O_DSYNC, and O_RSYNC for controlling the behavior.  Regardless of whether an implementation supports this  option,  it
+       Linux  implements  O_SYNC and O_DSYNC, but not O_RSYNC.  Somewhat incorrectly, glibc defines O_RSYNC to have the same value as
+       O_SYNC provides synchronized I/O file integrity completion, meaning write operations will flush data and all associated  meta‐
+       ation  to complete successfully.  Data integrity completion can reduce the number of disk operations that are required for ap‐
+       To understand the difference between the two types of completion, consider two pieces of file metadata: the file last  modifi‐
+       to  ensure that a read completes successfully, but the file length is.  Thus, O_DSYNC would only guarantee to flush updates to
+       Before Linux 2.6.33, Linux implemented only the O_SYNC flag for open().  However, when that flag was specified, most  filesys‐
+
+       flag value.  This ensures that applications compiled against new headers get at least O_DSYNC semantics on pre-2.6.33 kernels.
+       Since version 2.26, the glibc wrapper function for open() employs the openat() system call, rather than  the  kernel's  open()
+   NFS
+       On NFS filesystems with UID mapping enabled, open() may return a file descriptor but, for example, read(2) requests are denied
+
+       for further details.
+       Unlike the other values that can be specified in flags, the access mode values O_RDONLY, O_WRONLY, and O_RDWR do  not  specify
+
+       Linux drivers to return a file descriptor that is to be used only for device-specific ioctl(2) operations.
+       openat() and the other system calls and library functions that take a directory file descriptor argument  (i.e.,  execveat(2),
+       rat(3))  address two problems with the older interfaces that preceded them.  Here, the explanation is in terms of the openat()
+       First, openat() allows an application to avoid race conditions that could occur when using open() to open files in directories
+       file  dir1/dir2/xxx.dep  if  the file dir1/dir2/xxx exists.  The problem is that between the existence check and the file-cre‐
+       ment of (say) fstatat(2) and openat().  The use of the dirfd file descriptor also has other benefits:
+
+
+       ciently.)
+       The  O_DIRECT  flag  may  impose alignment restrictions on the length and address of user-space buffers and the file offset of
+       tem.  Some filesystems provide their own interfaces for doing so, for example the XFS_IOC_DIOINFO operation in xfsctl(3).
+       block size of the filesystem.  Since Linux 2.6.0, alignment to the logical block size of the underlying storage (typically 512
+
+       O_DIRECT  I/Os should never be run concurrently with the fork(2) system call, if the memory buffer is a private mapping (i.e.,
+       completed before fork(2) is called.  Failure to do so can result in data corruption and undefined behavior in parent and child
+       vise(2), ensuring that it will not be available to the child after fork(2).
+       also a fcntl(2) call to query appropriate alignments, and sizes.  FreeBSD 4.x introduced a flag of the same name, but  without
+       O_DIRECT  support was added under Linux in kernel version 2.4.10.  Older Linux kernels simply ignore this flag.  Some filesys‐
+       Applications should avoid mixing O_DIRECT and normal I/O to the same file, and especially to overlapping byte regions  in  the
+       to the same files.
+       may not support this combination.  The NFS protocol does not support passing the flag to the server, so O_DIRECT I/O will  by‐
+       cially  if  the  I/O size is small.  Some servers may also be configured to lie to clients about the I/O having reached stable
+
+
+       this flag.
+       FILE functionality.
+       a regular file (i.e., O_DIRECTORY is ignored).
+       chmod(2), chown(2), close(2), dup(2), fcntl(2), link(2), lseek(2), mknod(2), mmap(2), mount(2), open_by_handle_at(2), read(2),
+COLOPHON
+
