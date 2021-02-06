@@ -6,7 +6,7 @@
 /*   By: tderwedu <tderwedu@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/20 11:08:26 by tderwedu          #+#    #+#             */
-/*   Updated: 2021/02/05 19:03:41 by tderwedu         ###   ########.fr       */
+/*   Updated: 2021/02/06 12:50:48 by tderwedu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,25 +29,16 @@ int	main(int argc, char **argv)
 		while ((ret = get_next_line(fd, &str)) > 0)
 		{
 			printf("%s\n", str);
+			lines++;
 			free(str);
 		}
 		if (ret == 0)
 		{
 			printf("%s", str);
+			if (*str)
+				lines++;
 			free(str);
 		}
-	}
-	else if (argc == 3 && strcmp(argv[2],"1") == 0)
-	{
-		while ((ret = get_next_line(fd, &str)) > 0)
-		{
-			lines++;
-			free(str);
-		}
-		if (ret == 0 && *str)
-			lines++;
-		free(str);
-		printf("OK");
-		printf("%d\n", lines);
+		fprintf(stderr, "%d", lines);
 	}
 }

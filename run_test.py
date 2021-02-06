@@ -23,46 +23,70 @@ cflags		= "-Wall -Wextra -Werror -fsanitize=address"
 cc			= "gcc"
 main		= "main.c"
 result		= "result.txt"
+output		= "STD"
 
 BOLD		=	"\033[1m"
 BLU			=	"\033[96m"
+YLW			=	"\033[33m"
+PUR			=	"\033[35m"
 GRN			=	"\033[32m"
 RED			=	"\033[31m"
 NC			=	"\033[0m"
 
 src 		= [os.path.join(gnl_path, file) for file in src]
 src_b 		= [os.path.join(gnl_path, file) for file in src_b]
-files		= [os.path.join(gnl_path, file) for file in files]
+files		= [os.path.join("Files", file) for file in files]
 
-generate	= cc + " " + cflags + " " + bflags + " -I " + gnl_path + " -o " + name + " " + \
-			  " ".join(src) + " " + main
 
-def ft_checkfile(file):
-	if not os.path.getsize(result):
-		return RED + "{:^8}".format("[CRASH]") + NC
+def ft_checkOuput(process, file, lines):
+	if process.returncode:
+		ft_writeError(1, process, file)
+		if "Sanitizer" in process.stderr:
+			return PUR + "{:^13}".format("[LEAKS]") + NC
+		else:
+			return RED + "{:^13}".format("[CRASH]") + NC
 	else:
 		if filecmp.cmp(result, file):
-			return GRN + "{:^8}".format("[OK]") + NC
+			ret = GRN + "{:^6}".format("[OK]") + NC
 		else:
-			return RED + "{:^8}".format("[FAIL]") + NC
-def ft_checklines(val, lines):
-	# if not os.path.getsize(result):
-	# 	return RED + "{:^8}".format(" ") + NC
-	# else:
-	# 	if val == str(lines):
-	# 		return GRN + "{:^8}".format("[OK]") + NC
-	# 	else:
-	# 		return RED + "{:^8}".format("[FAIL]") + NC
-	return RED + "{:^8}".format(" ") + NC
+			ft_writeError(2, process, file)
+			ret =  YLW + "{:^6}".format("[FAIL]") + NC
+		if lines == int(process.stderr):
+			ret = ret + " " + GRN + "{:^6}".format("[OK]") + NC
+		else:
+			ret = ret + " " + YLW + "{:^6}".format("[FAIL]") + NC
+		return ret
 
-subprocess.run(generate.split(), stderr=subprocess.DEVNULL)
-print(BOLD + "{:^30}".format("BUFFER_SIZE = " + str(buffer_size)) + "{:^8} {:^8}".format("Output", "Lines") + NC )
-for i in range(len(files)):
-	log = open(result, "w", 1)
-	subprocess.run(["./" + name, files[i]], stdout=log, stderr=subprocess.DEVNULL)
-	log.close
-	# ret = subprocess.run(["./" + name , files[i], " 1"], text=True, stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
-	# print(ret)
-	print(BOLD + "{:<30}: ".format(expl[i]) + NC + ft_checkfile(files[i]) + " " + ft_checklines(0, lines[i]))
-	# os.remove(result)
+def ft_writeError(nb, process, file):
+	if not os.path.isdir(output):
+		os.mkdir(output)
+	if nb == 1:
+		path = os.path.join(output, "STDERR_" + os.path.basename(file))
+		log = open(path, "w", 1)
+		log.write(process.stderr)
+		log.close
+	elif nb == 2:
+		path = os.path.join(output, "STDOUT_" + os.path.basename(file))
+		log = open(path, "w", 1)
+		log.write(process.stdout)
+		log.close
+
+for i in range(len(4)):
+	print(BOLD + "{:>20}  {:^7} {:^7}".format("BUFFER_SIZE  " + str(sizes[i]), "Output", "Lines") + NC )
+
+# for size in sizes:
+# 	# Generating executable file
+# 	bflags	= "-D BUFFER_SIZE=" + str(size)
+# 	exe		=	cc + " " + cflags + " " + bflags + " -I " + gnl_path + " -o " + \
+# 		 		name + " " + " ".join(src) + " " + main
+# 	subprocess.run(exe.split(), stderr=subprocess.DEVNULL)
+	
+# 	print(BOLD + "{:>30}  {:^7} {:^7}".format("BUFFER_SIZE  " + str(buffer_size), "Output", "Lines") + NC )
+# 	for i in range(len(files)):
+# 		log = open(result, "w", 1)
+# 		process = subprocess.run(["./" + name, files[i]], text=True, stdout=log, stderr=subprocess.PIPE)
+# 		log.close
+# 		print(BOLD + "{:<30}: ".format(expl[i]) + NC + ft_checkOuput(process, files[i], lines[i]))
+# 		# os.remove(result)
+
 
