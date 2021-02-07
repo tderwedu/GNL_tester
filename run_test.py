@@ -1,11 +1,12 @@
 import subprocess
 import filecmp
+import math as m
 import os
 
 gnl_path	=	"../getNextLine"
 buffer_size	= 32
 
-sizes		= [1, 2, 3, 10, 11, 16, 32, 100, 9999, 100000]
+sizes		= [1, 2, 3, 10, 11, 16, 32, 100, 9999, 1000000]
 files		= ["file_00.txt", "file_01.txt", "file_02.txt", "file_03.txt", "file_04.txt"]
 expl		= ["A simple line", "A simple file", "Multiple newlines", "EOF without EOL", "Open() man page"]
 lines		= [1, 3, 8, 1, 653]
@@ -35,26 +36,26 @@ NC			=	"\033[0m"
 
 src 		= [os.path.join(gnl_path, file) for file in src]
 src_b 		= [os.path.join(gnl_path, file) for file in src_b]
-files		= [os.path.join("Files", file) for file in files]
+files		= [os.path.join("Test_Files", file) for file in files]
 
 
 def ft_checkOuput(process, file, lines):
 	if process.returncode:
 		ft_writeError(1, process, file)
 		if "Sanitizer" in process.stderr:
-			return PUR + "{:^13}".format("[LEAKS]") + NC
+			return BOLD + "|" + NC + PUR + "{:^12}".format("[LEAKS]") + NC
 		else:
-			return RED + "{:^13}".format("[CRASH]") + NC
+			return BOLD + "|" + NC + RED + "{:^12}".format("[CRASH]") + NC
 	else:
 		if filecmp.cmp(result, file):
-			ret = GRN + "{:^6}".format("[OK]") + NC
+			ret = BOLD + "|" + NC + GRN + "{:^6}".format("[OK]") + NC
 		else:
 			ft_writeError(2, process, file)
-			ret =  YLW + "{:^6}".format("[FAIL]") + NC
+			ret = BOLD + "|" + NC + YLW + "{:^6}".format("[FAIL]") + NC
 		if lines == int(process.stderr):
-			ret = ret + " " + GRN + "{:^6}".format("[OK]") + NC
+			ret = ret  + GRN + "{:^6}".format("[OK]") + NC
 		else:
-			ret = ret + " " + YLW + "{:^6}".format("[FAIL]") + NC
+			ret = ret  + YLW + "{:^6}".format("[FAIL]") + NC
 		return ret
 
 def ft_writeError(nb, process, file):
@@ -71,8 +72,67 @@ def ft_writeError(nb, process, file):
 		log.write(process.stdout)
 		log.close
 
-for i in range(len(4)):
-	print(BOLD + "{:>20}  {:^7} {:^7}".format("BUFFER_SIZE  " + str(sizes[i]), "Output", "Lines") + NC )
+def ft_reshapeSizes(sizes):
+	i_max = (os.get_terminal_size().columns - 20) // 13
+	j_max = m.ceil(len(sizes) / i_max)
+	tab		= list()
+	index	= 0
+	for j in range(j_max):
+		tab.append(list())
+		for i in range(i_max):
+			if index < len(sizes):
+				tab[j].append(sizes[index])
+			index = index + 1
+	return [tab, j_max]
+
+#
+#	Test
+#
+
+# Generating executables
+exe_names = list()
+print(BOLD + "Genereating executables" + NC)
+for size in sizes:
+	exe_names.append(name + "_" + str(size))
+	bflags	= "-D BUFFER_SIZE=" + str(size)
+	exe		=	cc + " " + cflags + " " + bflags + " -I " + gnl_path + " -o " + \
+		 		exe_names[-1] + " " + " ".join(src) + " " + main
+	process = subprocess.run(exe.split(), stderr=subprocess.DEVNULL)
+	if  not process.returncode:
+		print(BOLD + "{:<12}: ".format(exe_names[-1]) + NC + GRN + "[OK]" + NC)
+	else:
+		print(BOLD + "{:<12}: ".format(exe_names[-1]) + NC + RED + "[FAIL]" + NC)
+print("\n")
+# reshaping to adapt to terminal size
+[sizes, j_max] = ft_reshapeSizes(sizes)
+[exe_names, j_max] = ft_reshapeSizes(exe_names)
+for j in range(j_max):
+	# Printing header
+	print(BOLD + "{:^20}".format("BUFFER_SIZE") + NC, end="")
+	for size in sizes[j]:
+		print(BOLD + "|{:^12}".format(size) + NC, end="")
+	print("\n{:20}".format(" "), end="")
+	for size in sizes[j]:
+		print(BOLD + "|{:^6}{:^6}".format("Ouput", "Lines") + NC, end="")
+	print()
+	# Testing
+	for i in range(len(files)):
+		print(BOLD + "{:<20}".format(expl[i]) + NC, end="")
+		for n in exe_names[j]:
+			if not os.path.isfile(n):
+				print( BOLD + "|" + NC + RED + "{:^12}".format("[CRASH]") + NC)
+			log = open(result, "w", 1)
+			process =	subprocess.run(["./" + n, files[i]], \
+						text=True, stdout=log, stderr=subprocess.PIPE)
+			log.close
+			print(ft_checkOuput(process, files[i], lines[i]), end= "")
+			os.remove(result)
+		print()
+	print("\n")
+	# Removing executable files
+	for name in exe_names[j]:
+		os.remove(name)
+
 
 # for size in sizes:
 # 	# Generating executable file
