@@ -3,7 +3,14 @@ import filecmp
 import math as m
 import os
 
+################################################################################
+#                                  Input Data                                  #
+################################################################################
+
 gnl_path	=	"../getNextLine"
+
+src			=	["get_next_line.c", "get_next_line_utils.c"]
+src_b		=	["get_next_line_bonus.c", "get_next_line_utils_bonus.c"]
 
 buffSizes	=	[1, 2, 3, 10, 11, 16, 32, 100, 9999, 1000000]
 files		=	["file_00.txt", "file_01.txt", "file_02.txt", "file_03.txt", "file_04.txt",\
@@ -15,13 +22,8 @@ expl		= 	["A simple line", "A simple file", "Multiple newlines", "EOF without EO
 expl_b		=	["Open() 3 files", "Long line w/o EOL"]
 nbLines		=	[1, 3, 8, 1, 653, 1, 1]
 
-norme		=	"~/.norminette/norminette.rb"
+norme		=	os.environ["HOME"] + "/.norminette/norminette.rb"
 execName	=	"gnl"
-
-src			=	["get_next_line.c", "get_next_line_utils.c"]
-src_b		=	["get_next_line_bonus.c", "get_next_line_utils_bonus.c"]
-
-
 
 cflags		=	"-Wall -Wextra -Werror -fsanitize=address"
 cc			=	"gcc"
@@ -64,7 +66,7 @@ def ft_createExec(execName, mainName, sizes):
 	execNames = list()
 	# Reshaping to adapt to terminal size
 	[sizes, j_max] = ft_reshape(sizes, 10)
-	print(BOLD + BLU + "Creating executables" + NC)
+	print(BOLD + BLU + "\nCreating executables" + NC)
 	for j in range(j_max):
 		print(BOLD + "{:^20}".format("BUFFER_SIZE") + NC, end = "")
 		for size in sizes[j]:
@@ -87,7 +89,7 @@ def ft_printBuffSizes(sizes, j):
 	print(BOLD + "{:^20}".format("BUFFER_SIZE") + NC, end = "")
 	for size in sizes[j]:
 		print(BOLD + "|{:^12}".format(size) + NC, end = "")
-	print("\n{:20}".format(" "), end = "")
+	print(BOLD + "|" + NC + "\n{:20}".format(" "), end = "")
 	for size in sizes[j]:
 		print(BOLD + "|{:^6}{:^6}".format("Ouput", "Lines") + NC, end = "")
 	print(BOLD + "|" + NC )
@@ -126,7 +128,7 @@ def ft_writeIfError(nb, process, file, size):
 		path = os.path.join(outputDir, "BF_" + size + "_" + os.path.basename(file))
 		os.rename(result, path)
 
-def ft_checkGNL(execName, testfiles, checkFiles, cFile, nbLines, buffSizes):
+def ft_checkGNL(execName, testfiles, checkFiles, cFile, nbLines, buffSizes, expl):
 	# Creating executables
 	execNames = ft_createExec(execName, cFile, buffSizes)
 	# Reshaping to adapt to terminal size
@@ -162,17 +164,72 @@ def	ft_printHeader(s):
 	print("#{:^{x}}#".format(s, x = l - 2))
 	print("{:#^{x}}".format("#", x = l) + NC)
 
+def ft_isFiles(src, msg):
+	b = 1
+	for f in src:
+		b *= os.path.isfile(f)
+	print(BOLD + "{:^20}".format(msg) + "|" + NC, end = "", flush = True)
+	if b:
+		print(GRN + "{:^6}".format("[OK]") + NC)
+	else:
+		print(RED + "{:^6}".format("[FAIL]") + NC)
+	return b
+
+def ft_norminette(src, msg):
+	process = subprocess.run([norme] + src, text=True, stdout = subprocess.PIPE,\
+				stderr = subprocess.PIPE, env = os.environ)
+	print(BOLD + "{:^20}".format(msg) + "|" + NC, end = "", flush = True)
+	if not "Error" in process.stdout:
+		print(GRN + "{:^6}".format("[OK]") + NC)
+	else:
+		print(RED + "{:^6}".format("[FAIL]") + NC)
+
+def ft_nbStaticVar(src):
+	print(BOLD + BLU + "Static Variable" + NC)
+	msg = "Only One"
+	nbStaticVar = 0
+	for file in src:
+		with open(file, 'r') as f:
+			for line in f.readlines():
+				if ("static" in line) and (";" in line):
+						nbStaticVar += 1
+	print(BOLD + "{:^20}".format(msg) + "|" + NC, end = "", flush = True)
+	if 	nbStaticVar <= 1:
+		print(GRN + "{:^6}".format("[OK]") + NC + "\n")
+	else:
+		print(RED + "{:^6}".format("[FAIL]") + NC + "\n")
+	
+
+
 ################################################################################
 #                                    Script                                    #
 ################################################################################
 
-ft_printHeader("MANDATORY PART")
-testfiles	= [[f] for f in files]
-checkFiles	= files
-ft_checkGNL(execName, testfiles, checkFiles, "main.c", nbLines, buffSizes)
-ft_printHeader("BONUS PART")
-testfiles	= [files_b0, files_b1]
-checkFiles	= [files[4], files[6]]
-buffSizes	= [buffSizes[i] for i in range(len(buffSizes)) if not i % 2 ]
-nbLines		= [0] * len(testfiles)
-ft_checkGNL(execName, testfiles, checkFiles, "bonus.c", nbLines, buffSizes)
+if __name__ == "__main__":
+	ft_printHeader("Test of get_next_line() - 2021")
+	print("\n" + BOLD + BLU + "Source Files" + NC)
+	f_m = ft_isFiles(src, "Mandatory Part")
+	f_b = ft_isFiles(src_b,"Bonus Part")
+
+	print(BOLD + BLU + "Norminette" + NC)
+	if f_m:
+		ft_norminette(src, "Mandatory Part")
+	if f_b:
+		ft_norminette(src_b, "Bonus Part")
+	print()
+
+	if f_m:
+		ft_printHeader("MANDATORY PART")
+		testfiles	= [[f] for f in files]
+		checkFiles	= files
+		ft_checkGNL(execName, testfiles, checkFiles, "main.c", nbLines, buffSizes, expl)
+	if f_b:
+		ft_printHeader("BONUS PART")
+		testfiles	= [files_b0, files_b1]
+		checkFiles	= [files[4], files[6]]
+		buffSizes	= [buffSizes[i] for i in range(len(buffSizes)) if not i % 2 ]
+		nbLines		= [0] * len(testfiles)
+		ft_checkGNL(execName, testfiles, checkFiles, "bonus.c", nbLines, buffSizes, expl_b)
+		ft_nbStaticVar(src_b)
+	ft_printHeader("THE END")
+
