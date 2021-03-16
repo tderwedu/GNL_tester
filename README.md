@@ -1,5 +1,5 @@
 # GNL_tester
-A tester for Get_Next_line (42cursus - 2020)
+A tester for Get_Next_line (42cursus - 2021)
 
 ![screenshot](./GNL_Tester.png)
 
