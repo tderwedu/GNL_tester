@@ -1,6 +1,8 @@
 # GNL_tester
 A tester for Get_Next_line (42cursus - 2020)
 
+![screenshot](./GNL_Tester.png)
+
 ## How to use it
 
 Clone this repository such that

@@ -7,10 +7,10 @@ import os
 #                                  Input Data                                  #
 ################################################################################
 
-gnl_path	=	"../getNextLine"
+gnl_path	=	"../02_getNextLine"
 
 src			=	["get_next_line.c", "get_next_line_utils.c"]
-src_b		=	["get_next_line_bonus.c", "get_next_line_utils_bonus.c"]
+src_b		=	["get_next_line.c", "get_next_line_utils.c"]
 
 buffSizes	=	[1, 2, 3, 10, 11, 16, 32, 100, 9999, 1000000]
 files		=	["file_00.txt", "file_01.txt", "file_02.txt", "file_03.txt", "file_04.txt",\
@@ -64,6 +64,7 @@ def ft_reshape(vec, length):
 
 def ft_createExec(execName, mainName, sizes):
 	execNames = list()
+	fail = 0
 	# Reshaping to adapt to terminal size
 	[sizes, j_max] = ft_reshape(sizes, 10)
 	print(BOLD + BLU + "\nCreating executables" + NC)
@@ -77,12 +78,15 @@ def ft_createExec(execName, mainName, sizes):
 			bflags	= "-D BUFFER_SIZE=" + str(size)
 			exe		=	cc + " " + cflags + " " + bflags + " -I " + gnl_path + " -o " +\
 						execNames[-1] + " " + " ".join(src) + " " + mainName
-			process = subprocess.run(exe.split(), stderr=subprocess.DEVNULL)
+			process = subprocess.run(exe.split())
 			if  not process.returncode:
 				print(BOLD + "|" + NC + GRN + "{:^9}".format("[OK]") + NC, end = "", flush = True)
 			else:
 				print(BOLD + "|" + NC + RED + "{:^9}".format("[FAIL]") + NC, end = "", flush = True)
+				fail = 1
 		print(BOLD + "|" + NC +"\n")
+	if fail:
+		quit()
 	return execNames
 
 def ft_printBuffSizes(sizes, j):

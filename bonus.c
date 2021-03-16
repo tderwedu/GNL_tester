@@ -6,11 +6,11 @@
 /*   By: tderwedu <tderwedu@student.s19.be>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/20 11:08:26 by tderwedu          #+#    #+#             */
-/*   Updated: 2021/02/07 16:04:52 by tderwedu         ###   ########.fr       */
+/*   Updated: 2021/03/16 11:43:35 by tderwedu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../getNextLine/get_next_line.h"
+#include "get_next_line.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
