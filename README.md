@@ -14,7 +14,18 @@ and execute the following command
 ```bash
 python run_test.py
 ```
-You can change the path of your get_next_line function by modifying the ```gnl_path``` in the header of the file ```run_test.py``` accordingly.
+> Note: Python 3.8.3 has been used to write the tester.
+
+You can change the path of your get_next_line function by modifying the ```gnl_path``` in the header of ```run_test.py``` accordingly.
+
+## What's supported
+ 
+ - Norminette check
+ - Mandatory part with multiple buffer size
+ - Bonus Part
+	1. Check for a single ```static variable```
+	2. Check if the function is able to manage multpile file descriptor.
+ - Memory leaks
 
 ## License
 
