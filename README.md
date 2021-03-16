@@ -22,7 +22,7 @@ You can change the path of your get_next_line function by modifying the ```gnl_p
  
  - Norminette check
  - Mandatory part with multiple buffer size
- - Bonus Part
+ - Bonus part
 	1. Check for a single ```static variable```
 	2. Check if the function is able to manage multpile file descriptor.
  - Memory leaks
